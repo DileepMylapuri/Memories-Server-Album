@@ -2,8 +2,8 @@ const express = require("express");
 const User = require("../models/User");
 const auth = require("../middleware/auth");
 const upload = require("../middleware/upload");
-const Category = require("../Models/Category");
-const Memory = require("../Models/Memory");
+const Category = require("../models/Category");
+const Memory = require("../models/Memory");
 
 const router = express.Router();
 
