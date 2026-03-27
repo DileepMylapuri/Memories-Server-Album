@@ -60,8 +60,8 @@ router.post("/memory", auth, upload.array("files", 20), async (req, res) => {
       res.json({ category, memories });
 
     } catch (err) {
-      console.error(err);
-      res.status(500).json({ message: "Upload failed" });
+      console.error("Upload error:", err.message || err);
+      res.status(500).json({ message: err.message || "Upload failed" });
     }
   }
 );
