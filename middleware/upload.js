@@ -10,13 +10,9 @@ cloudinary.config({
 
 const storage = new CloudinaryStorage({
   cloudinary,
-  params: async (req, file) => {
-    const isVideo = file.mimetype.startsWith("video");
-    return {
-      folder: "memories-album",
-      resource_type: isVideo ? "video" : "image",
-      allowed_formats: ["jpg", "jpeg", "png", "gif", "webp", "mp4", "mov", "avi", "mkv"],
-    };
+  params: {
+    folder: "memories-album",
+    resource_type: "auto",
   },
 });
 
