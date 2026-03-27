@@ -1,5 +1,5 @@
 const express = require("express");
-const { upload } = require("../middleware/upload");
+const { upload, uploadToCloudinary } = require("../middleware/upload");
 const auth = require("../middleware/auth");
 const Memory = require('../Models/Memory');
 const Category = require("../Models/Category");
@@ -21,58 +21,43 @@ router.get("/stats", auth, async (req, res) => {
   });
 });
 
-router.post("/memory", auth, (req, res, next) => {
-  upload.array("files", 20)(req, res, (err) => {
-    if (err) {
-      console.error("Multer/Cloudinary error:", err.message || err);
-      return res.status(500).json({ message: err.message || "File upload failed" });
+router.post("/memory", auth, upload.array("files", 20), async (req, res) => {
+  try {
+    const { title, date } = req.body;
+
+    const existingCategory = await Category.findOne({ title, user: req.userId });
+    if (existingCategory) {
+      return res.status(400).json({ message: "Category name already exists" });
     }
-    next();
-  });
-}, async (req, res) => {
-    try {
-      const { title, date } = req.body;
 
-      // CHECK DUPLICATE CATEGORY FOR SAME USER
-       const existingCategory = await Category.findOne({
-          title,
-          user: req.userId
-       });
+    const category = await Category.create({ title, date, user: req.userId });
 
-        if (existingCategory) {
-          return res.status(400).json({
-            message: "Category name already exists"
-          });
-        }
+    const memories = await Promise.all(
+      req.files.map(async (file) => {
+        const isVideo = file.mimetype.startsWith("video");
 
-      // Create category
-      const category = await Category.create({
-        title,
-        date,
-        user: req.userId
-      });
+        const result = await uploadToCloudinary(file.buffer, {
+          folder: "memories-album",
+          resource_type: isVideo ? "video" : "image",
+        });
 
-      // Save files
-      const memories = await Promise.all(
-        req.files.map((file) =>
-          Memory.create({
-            fileUrl: file.path,
-            cloudinaryPublicId: file.filename,
-            type: file.mimetype.startsWith("image") ? "image" : "video",
-            category: category._id,
-            user: req.userId
-          })
-        )
-      );
+        return Memory.create({
+          fileUrl: result.secure_url,
+          cloudinaryPublicId: result.public_id,
+          type: isVideo ? "video" : "image",
+          category: category._id,
+          user: req.userId,
+        });
+      })
+    );
 
-      res.json({ category, memories });
+    res.json({ category, memories });
 
-    } catch (err) {
-      console.error("Upload error:", err.message || err);
-      res.status(500).json({ message: err.message || "Upload failed" });
-    }
+  } catch (err) {
+    console.error("Upload error:", err.message || err);
+    res.status(500).json({ message: err.message || "Upload failed" });
   }
-);
+});
 
 
 router.get("/recent", auth, async (req, res) => {

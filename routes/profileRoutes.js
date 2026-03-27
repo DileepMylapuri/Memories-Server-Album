@@ -1,7 +1,7 @@
 const express = require("express");
 const User = require("../Models/User");
 const auth = require("../middleware/auth");
-const { upload, cloudinary } = require("../middleware/upload");
+const { upload, cloudinary, uploadToCloudinary } = require("../middleware/upload");
 const Category = require("../Models/Category");
 const Memory = require("../Models/Memory");
 
@@ -70,11 +70,19 @@ router.put(
       if (bio) updateData.bio = bio;
 
       if (req.files?.profileImage) {
-        updateData.profileImage = req.files.profileImage[0].path;
+        const result = await uploadToCloudinary(req.files.profileImage[0].buffer, {
+          folder: "memories-album/profiles",
+          resource_type: "image",
+        });
+        updateData.profileImage = result.secure_url;
       }
 
       if (req.files?.coverImage) {
-        updateData.coverImage = req.files.coverImage[0].path;
+        const result = await uploadToCloudinary(req.files.coverImage[0].buffer, {
+          folder: "memories-album/covers",
+          resource_type: "image",
+        });
+        updateData.coverImage = result.secure_url;
       }
 
       const updatedUser = await User.findByIdAndUpdate(
