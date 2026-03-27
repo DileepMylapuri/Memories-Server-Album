@@ -9,30 +9,39 @@ const memoryRoutes = require('./routes/memoryRoutes');
 
 const app = express();
 
-// Middleware
-// app.use(cors());
+const allowedOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(',').map((o) => o.trim())
+  : ['http://localhost:5173'];
+
 app.use(
   cors({
-    origin: "*",
-    credentials: true
+    origin: (origin, callback) => {
+      // Allow requests with no origin (mobile apps, curl, Postman)
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error(`CORS blocked: ${origin}`));
+      }
+    },
+    credentials: true,
   })
 );
+
 app.use(express.json());
 
-
-// DB connect
 connectDB();
 
-// Routes
 app.use('/api', authRoutes);
 app.use('/api', profileRoutes);
-app.use("/uploads", express.static("uploads"));
 app.use('/api', memoryRoutes);
 
-// Health check
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
 app.get('/', (req, res) => {
-  res.send('API Running 🚀');
+  res.json({ message: 'Memories Album API Running 🚀' });
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on ${PORT}`));
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

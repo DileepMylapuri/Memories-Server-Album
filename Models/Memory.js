@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const memorySchema = new mongoose.Schema(
   {
     fileUrl: { type: String, required: true },
+    cloudinaryPublicId: { type: String },
     type: { type: String, enum: ["image", "video"], required: true },
     category: {
       type: mongoose.Schema.Types.ObjectId,

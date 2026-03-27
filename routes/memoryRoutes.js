@@ -1,5 +1,5 @@
 const express = require("express");
-const upload = require("../middleware/upload");
+const { upload } = require("../middleware/upload");
 const auth = require("../middleware/auth");
 const Memory = require('../Models/Memory');
 const Category = require("../Models/Category");
@@ -48,10 +48,9 @@ router.post("/memory", auth, upload.array("files", 20), async (req, res) => {
       const memories = await Promise.all(
         req.files.map((file) =>
           Memory.create({
-            fileUrl: "/uploads/" + file.filename,
-            type: file.mimetype.startsWith("image")
-              ? "image"
-              : "video",
+            fileUrl: file.path,
+            cloudinaryPublicId: file.filename,
+            type: file.mimetype.startsWith("image") ? "image" : "video",
             category: category._id,
             user: req.userId
           })

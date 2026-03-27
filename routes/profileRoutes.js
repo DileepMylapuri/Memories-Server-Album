@@ -1,7 +1,7 @@
 const express = require("express");
 const User = require("../Models/User");
 const auth = require("../middleware/auth");
-const upload = require("../middleware/upload");
+const { upload, cloudinary } = require("../middleware/upload");
 const Category = require("../Models/Category");
 const Memory = require("../Models/Memory");
 
@@ -70,13 +70,11 @@ router.put(
       if (bio) updateData.bio = bio;
 
       if (req.files?.profileImage) {
-        updateData.profileImage =
-          "/uploads/" + req.files.profileImage[0].filename;
+        updateData.profileImage = req.files.profileImage[0].path;
       }
 
       if (req.files?.coverImage) {
-        updateData.coverImage =
-          "/uploads/" + req.files.coverImage[0].filename;
+        updateData.coverImage = req.files.coverImage[0].path;
       }
 
       const updatedUser = await User.findByIdAndUpdate(
@@ -104,9 +102,13 @@ router.delete("/memory/:id", auth, async (req, res) => {
       return res.status(404).json({ message: "Memory not found" });
     }
 
-    // 🔐 Authorization Check
     if (memory.user.toString() !== req.userId) {
       return res.status(403).json({ message: "Unauthorized" });
+    }
+
+    if (memory.cloudinaryPublicId) {
+      const resourceType = memory.type === "video" ? "video" : "image";
+      await cloudinary.uploader.destroy(memory.cloudinaryPublicId, { resource_type: resourceType });
     }
 
     await memory.deleteOne();
@@ -131,6 +133,17 @@ router.delete("/category/:id", auth, async (req, res) => {
     if (category.user.toString() !== req.userId) {
       return res.status(403).json({ message: "Unauthorized" });
     }
+
+    const memories = await Memory.find({ category: category._id });
+    await Promise.all(
+      memories
+        .filter((m) => m.cloudinaryPublicId)
+        .map((m) =>
+          cloudinary.uploader.destroy(m.cloudinaryPublicId, {
+            resource_type: m.type === "video" ? "video" : "image",
+          })
+        )
+    );
 
     await Memory.deleteMany({ category: category._id });
     await category.deleteOne();
