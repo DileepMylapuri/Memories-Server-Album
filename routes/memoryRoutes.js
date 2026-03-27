@@ -21,7 +21,15 @@ router.get("/stats", auth, async (req, res) => {
   });
 });
 
-router.post("/memory", auth, upload.array("files", 20), async (req, res) => {
+router.post("/memory", auth, (req, res, next) => {
+  upload.array("files", 20)(req, res, (err) => {
+    if (err) {
+      console.error("Multer/Cloudinary error:", err.message || err);
+      return res.status(500).json({ message: err.message || "File upload failed" });
+    }
+    next();
+  });
+}, async (req, res) => {
     try {
       const { title, date } = req.body;
 
