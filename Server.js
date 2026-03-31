@@ -8,7 +8,11 @@ const profileRoutes = require('./routes/profileRoutes');
 const memoryRoutes = require('./routes/memoryRoutes');
 const journeyRoutes = require("./routes/journeyRoutes");
 
-app.use(cors());
+app.use(cors({
+  origin: "https://ltm-frontend-code.onrender.com",
+  credentials: true
+}));
+
 const app = express();
 
 const allowedOrigins = process.env.CORS_ORIGIN
