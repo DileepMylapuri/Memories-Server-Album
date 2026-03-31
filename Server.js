@@ -8,34 +8,37 @@ const profileRoutes = require('./routes/profileRoutes');
 const memoryRoutes = require('./routes/memoryRoutes');
 const journeyRoutes = require("./routes/journeyRoutes");
 
-app.use(cors({
-  origin: "https://ltm-frontend-code.onrender.com",
-  credentials: true
-}));
-
 const app = express();
+
+connectDB();
 
 const allowedOrigins = process.env.CORS_ORIGIN
   ? process.env.CORS_ORIGIN.split(',').map((o) => o.trim())
   : ['http://localhost:5173'];
 
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      // Allow requests with no origin (mobile apps, curl, Postman)
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error(`CORS blocked: ${origin}`));
-      }
-    },
-    credentials: true,
-  })
-);
+  
+  
+  app.use(
+    cors({
+      origin: (origin, callback) => {
+        // Allow requests with no origin (mobile apps, curl, Postman)
+        if (!origin || allowedOrigins.includes(origin)) {
+          callback(null, true);
+        } else {
+          callback(new Error(`CORS blocked: ${origin}`));
+        }
+      },
+      credentials: true,
+    })
+  );
 
-app.use(express.json());
-
-connectDB();
+  // app.use(cors({
+  //   origin: "https://ltm-frontend-code.onrender.com",
+  //   credentials: true
+  // }));
+  
+  app.use(express.json());
+  
 
 app.use('/api', authRoutes);
 app.use('/api', profileRoutes);
