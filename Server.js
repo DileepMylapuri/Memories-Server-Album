@@ -6,7 +6,9 @@ const connectDB = require('./config/LTM-DB');
 const authRoutes = require('./routes/authRoutes');
 const profileRoutes = require('./routes/profileRoutes');
 const memoryRoutes = require('./routes/memoryRoutes');
+const journeyRoutes = require("./routes/journeyRoutes");
 
+app.use(cors());
 const app = express();
 
 const allowedOrigins = process.env.CORS_ORIGIN
@@ -34,6 +36,8 @@ connectDB();
 app.use('/api', authRoutes);
 app.use('/api', profileRoutes);
 app.use('/api', memoryRoutes);
+app.use("/api/journey", journeyRoutes);
+
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
